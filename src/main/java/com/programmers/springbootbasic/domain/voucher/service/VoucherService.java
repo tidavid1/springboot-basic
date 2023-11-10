@@ -1,7 +1,8 @@
 package com.programmers.springbootbasic.domain.voucher.service;
 
+import com.programmers.springbootbasic.common.utils.LocalDateValueStrategy;
 import com.programmers.springbootbasic.common.utils.UUIDValueStrategy;
-import com.programmers.springbootbasic.domain.voucher.dto.VoucherRequestDto;
+import com.programmers.springbootbasic.domain.voucher.dto.VoucherServiceRequestDto;
 import com.programmers.springbootbasic.domain.voucher.entity.Voucher;
 import com.programmers.springbootbasic.domain.voucher.exception.ErrorMsg;
 import com.programmers.springbootbasic.domain.voucher.repository.VoucherRepository;
@@ -19,31 +20,53 @@ import java.util.List;
 public class VoucherService {
     private final VoucherRepository voucherRepository;
     private final UUIDValueStrategy uuidValueStrategy;
+    private final LocalDateValueStrategy localDateValueStrategy;
 
+    @Transactional(readOnly = true)
     public List<Voucher> findAllVouchers() {
         return voucherRepository.findAll();
     }
 
-    public Voucher createVoucher(VoucherRequestDto voucherRequestDto) {
-        Voucher voucher = VoucherType.of(voucherRequestDto.getVoucherType(), uuidValueStrategy.generateUUID(), voucherRequestDto.getValue());
+    public Voucher createVoucher(VoucherServiceRequestDto voucherServiceRequestDto) {
+        Voucher voucher = VoucherType.of(voucherServiceRequestDto.getVoucherType(),
+                uuidValueStrategy.generateUUID(),
+                voucherServiceRequestDto.getValue(),
+                localDateValueStrategy.generateLocalDate());
         return voucherRepository.save(voucher);
     }
 
-    public Voucher findVoucherById(VoucherRequestDto voucherRequestDto) {
-        return voucherRepository.findById(voucherRequestDto.getVoucherId()).orElseThrow(() -> {
+    @Transactional(readOnly = true)
+    public Voucher findVoucherById(VoucherServiceRequestDto voucherServiceRequestDto) {
+        return voucherRepository.findById(voucherServiceRequestDto.getVoucherId()).orElseThrow(() -> {
             log.warn(ErrorMsg.VOUCHER_NOT_FOUND.getMessage());
             return new RuntimeException(ErrorMsg.VOUCHER_NOT_FOUND.getMessage());
         });
     }
 
-    public void updateVoucher(VoucherRequestDto voucherRequestDto) {
-        Voucher voucher = findVoucherById(voucherRequestDto);
-        voucher = VoucherType.of(VoucherType.predictVoucherType(voucher), voucherRequestDto.getVoucherId(), voucherRequestDto.getValue());
+    @Transactional(readOnly = true)
+    public List<Voucher> findVouchersByType(VoucherServiceRequestDto voucherServiceRequestDto) {
+        if (!VoucherType.predictVoucherTypeNumber(voucherServiceRequestDto.getVoucherType())) {
+            throw new IllegalArgumentException(ErrorMsg.WRONG_VOUCHER_TYPE_NUMBER.getMessage());
+        }
+        return voucherRepository.findByVoucherType(voucherServiceRequestDto.getVoucherType());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Voucher> findVouchersByDate(VoucherServiceRequestDto voucherServiceRequestDto) {
+        return voucherRepository.findByDate(voucherServiceRequestDto.getDate());
+    }
+
+    public void updateVoucher(VoucherServiceRequestDto voucherServiceRequestDto) {
+        Voucher voucher = findVoucherById(voucherServiceRequestDto);
+        voucher = VoucherType.of(VoucherType.predictVoucherType(voucher),
+                voucherServiceRequestDto.getVoucherId(),
+                voucherServiceRequestDto.getValue(),
+                voucher.getCreatedAt());
         voucherRepository.update(voucher);
     }
 
-    public void deleteVoucher(VoucherRequestDto voucherRequestDto) {
-        Voucher voucher = findVoucherById(voucherRequestDto);
+    public void deleteVoucher(VoucherServiceRequestDto voucherServiceRequestDto) {
+        Voucher voucher = findVoucherById(voucherServiceRequestDto);
         voucherRepository.delete(voucher);
     }
 

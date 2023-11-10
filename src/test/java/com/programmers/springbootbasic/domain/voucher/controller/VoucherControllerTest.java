@@ -1,7 +1,7 @@
 package com.programmers.springbootbasic.domain.voucher.controller;
 
 import com.programmers.springbootbasic.common.response.CommonResult;
-import com.programmers.springbootbasic.domain.voucher.dto.VoucherRequestDto;
+import com.programmers.springbootbasic.domain.voucher.dto.VoucherServiceRequestDto;
 import com.programmers.springbootbasic.domain.voucher.entity.Voucher;
 import com.programmers.springbootbasic.domain.voucher.exception.ErrorMsg;
 import com.programmers.springbootbasic.domain.voucher.service.VoucherService;
@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,6 +28,7 @@ class VoucherControllerTest {
     private static final UUID VOUCHER_ID = UUID.randomUUID();
     private static final String VOUCHER_TYPE_STR = "1";
     private static final String VALUE_STR = "25";
+    private static final LocalDate CREATED_DATE = LocalDate.now();
     @InjectMocks
     private VoucherController voucherController;
     @Mock
@@ -36,8 +38,8 @@ class VoucherControllerTest {
     @Test
     void testCreateVoucherSuccess() {
         // Arrange
-        Voucher expectedVoucher = VoucherType.of(1, VOUCHER_ID, 25L);
-        when(voucherService.createVoucher(any(VoucherRequestDto.class))).thenReturn(expectedVoucher);
+        Voucher expectedVoucher = VoucherType.of(1, VOUCHER_ID, 25L, CREATED_DATE);
+        when(voucherService.createVoucher(any(VoucherServiceRequestDto.class))).thenReturn(expectedVoucher);
         // Act
         CommonResult<String> actualResult = voucherController.createVoucher(VOUCHER_TYPE_STR, VALUE_STR);
         // Assert
@@ -64,8 +66,8 @@ class VoucherControllerTest {
     void testFindVoucherByIdSuccess() {
         // Arrange
         long expectedVoucherValue = 25L;
-        Voucher expectedVoucher = VoucherType.of(1, VOUCHER_ID, expectedVoucherValue);
-        when(voucherService.findVoucherById(any(VoucherRequestDto.class))).thenReturn(expectedVoucher);
+        Voucher expectedVoucher = VoucherType.of(1, VOUCHER_ID, expectedVoucherValue, CREATED_DATE);
+        when(voucherService.findVoucherById(any(VoucherServiceRequestDto.class))).thenReturn(expectedVoucher);
         // Act
         CommonResult<String> actualResult = voucherController.findVoucherById(VOUCHER_ID.toString());
         // Assert
@@ -88,7 +90,7 @@ class VoucherControllerTest {
     @Test
     void testUpdateVoucherSuccess() {
         // Arrange
-        doNothing().when(voucherService).updateVoucher(any(VoucherRequestDto.class));
+        doNothing().when(voucherService).updateVoucher(any(VoucherServiceRequestDto.class));
         // Act
         CommonResult<String> actualResult = voucherController.updateVoucher(VOUCHER_ID.toString(), VALUE_STR);
         // Assert
@@ -123,7 +125,7 @@ class VoucherControllerTest {
     @Test
     void testDeleteVoucherSuccess() {
         // Arrange
-        doNothing().when(voucherService).deleteVoucher(any(VoucherRequestDto.class));
+        doNothing().when(voucherService).deleteVoucher(any(VoucherServiceRequestDto.class));
         // Act
         CommonResult<String> actualResult = voucherController.deleteVoucher(VOUCHER_ID.toString());
         // Assert
